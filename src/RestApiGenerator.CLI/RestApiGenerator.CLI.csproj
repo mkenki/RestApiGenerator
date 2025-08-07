@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>RestApiGenerator.CLI</RootNamespace>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>restapigenerator</ToolCommandName>
+    <PackageId>RestApiGenerator.CLI</PackageId>
+    <Version>1.0.1</Version>
+    <Authors>Your Name/Company</Authors>
+    <Company>Your Company</Company>
+    <Description>A command-line tool for generating REST API client code from Swagger/OpenAPI specifications using RestApiGenerator.Core.</Description>
+    <RepositoryUrl>https://github.com/yourusername/RestApiGenerator</RepositoryUrl>
+    <PackageTags>REST;API;Code Generation;Swagger;OpenAPI;CLI;Tool</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RestApiGenerator.Core\RestApiGenerator.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
