@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyDescriptionAttribute(("A command-line tool for generating REST API client code from Swagger/OpenAPI spec" +
     "ifications using RestApiGenerator.Core."))]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.1.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.1+465725d0aba1abf9978b95f723523a048a5ddd85")]
 [assembly: System.Reflection.AssemblyProductAttribute("RestApiGenerator.CLI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RestApiGenerator.CLI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.1.0")]

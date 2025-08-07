@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>RestApiGenerator.Core</id>
+    <version>1.0.2</version>
+    <authors>MustafaKemalEnki</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <readme>README.md</readme>
+    <projectUrl>https://github.com/mkenki/RestApiGenerator</projectUrl>
+    <description>A core library for REST API code generation from Swagger/OpenAPI specifications.</description>
+    <tags>REST API Code Generation Swagger OpenAPI</tags>
+    <repository type="git" url="https://github.com/mkenki/RestApiGenerator.git" commit="465725d0aba1abf9978b95f723523a048a5ddd85" />
+    <dependencies>
+      <group targetFramework="net8.0">
+        <dependency id="Microsoft.CodeAnalysis.CSharp" version="4.14.0" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="13.0.3" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="C:\RestApiGenerator\src\RestApiGenerator.Core\bin\Debug\net8.0\RestApiGenerator.Core.dll" target="lib\net8.0\RestApiGenerator.Core.dll" />
+    <file src="C:\RestApiGenerator\README.md" target="\README.md" />
+  </files>
+</package>

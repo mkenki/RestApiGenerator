@@ -130,3 +130,4 @@ C:\RestApiGenerator\tests\RestApiGenerator.Core.Tests\obj\Debug\net8.0\refint\Re
 C:\RestApiGenerator\tests\RestApiGenerator.Core.Tests\obj\Debug\net8.0\RestApiGenerator.Core.Tests.pdb
 C:\RestApiGenerator\tests\RestApiGenerator.Core.Tests\obj\Debug\net8.0\RestApiGenerator.Core.Tests.genruntimeconfig.cache
 C:\RestApiGenerator\tests\RestApiGenerator.Core.Tests\obj\Debug\net8.0\ref\RestApiGenerator.Core.Tests.dll
+C:\RestApiGenerator\tests\RestApiGenerator.Core.Tests\obj\Debug\net8.0\RestApiGenerator.Core.Tests.sourcelink.json

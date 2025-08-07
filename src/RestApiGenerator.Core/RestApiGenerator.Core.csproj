@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>RestApiGenerator.Core</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>MustafaKemalEnki</Authors>
     <Company>Enki</Company>
     <Description>A core library for REST API code generation from Swagger/OpenAPI specifications.</Description>
@@ -13,6 +13,8 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/mkenki/RestApiGenerator</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mkenki/RestApiGenerator.git</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

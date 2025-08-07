@@ -61,3 +61,4 @@ C:\RestApiGenerator\src\RestApiGenerator.CLI\obj\Debug\net8.0\refint\RestApiGene
 C:\RestApiGenerator\src\RestApiGenerator.CLI\obj\Debug\net8.0\RestApiGenerator.CLI.pdb
 C:\RestApiGenerator\src\RestApiGenerator.CLI\obj\Debug\net8.0\RestApiGenerator.CLI.genruntimeconfig.cache
 C:\RestApiGenerator\src\RestApiGenerator.CLI\obj\Debug\net8.0\ref\RestApiGenerator.CLI.dll
+C:\RestApiGenerator\src\RestApiGenerator.CLI\obj\Debug\net8.0\RestApiGenerator.CLI.sourcelink.json

@@ -5,7 +5,7 @@
   },
   "projects": {
     "C:\\RestApiGenerator\\src\\RestApiGenerator.Core\\RestApiGenerator.Core.csproj": {
-      "version": "1.0.1",
+      "version": "1.0.2",
       "restore": {
         "projectUniqueName": "C:\\RestApiGenerator\\src\\RestApiGenerator.Core\\RestApiGenerator.Core.csproj",
         "projectName": "RestApiGenerator.Core",

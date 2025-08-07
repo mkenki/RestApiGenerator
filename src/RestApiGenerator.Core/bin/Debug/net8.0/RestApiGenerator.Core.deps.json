@@ -6,7 +6,7 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v8.0": {
-      "RestApiGenerator.Core/1.0.0": {
+      "RestApiGenerator.Core/1.0.2": {
         "dependencies": {
           "Microsoft.CodeAnalysis.CSharp": "4.14.0",
           "Newtonsoft.Json": "13.0.3"
@@ -155,7 +155,7 @@
     }
   },
   "libraries": {
-    "RestApiGenerator.Core/1.0.0": {
+    "RestApiGenerator.Core/1.0.2": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
