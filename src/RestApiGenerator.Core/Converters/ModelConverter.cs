@@ -6,6 +6,8 @@ namespace RestApiGenerator.Core.Converters
 {
     public class ModelConverter
     {
+        private Dictionary<string, SwaggerSchema> _schemas = new();
+
         public CodeModel ConvertToCodeModel(SwaggerDocument swagger, RestApiGenerator.Core.Models.GeneratorConfig config)
         {
             var model = new CodeModel
@@ -16,11 +18,23 @@ namespace RestApiGenerator.Core.Converters
             };
             model.Authentication = config.Authentication;
 
+            // Store schemas for $ref resolution
+            if (swagger.Components?.Schemas != null)
+            {
+                foreach (var schema in swagger.Components.Schemas)
+                {
+                    _schemas[$"#/components/schemas/{schema.Key}"] = schema.Value;
+                }
+            }
+
             // Convert schemas to models
             model.Models = ConvertSchemas(swagger);
 
             // Convert paths to methods
             model.Methods = ConvertPaths(swagger, model.Models);
+
+            // Second pass: Establish polymorphic inheritance relationships
+            EstablishInheritanceRelationships(model.Models, swagger);
 
             return model;
         }
@@ -91,7 +105,9 @@ namespace RestApiGenerator.Core.Converters
             var model = new ModelClass
             {
                 Name = ToPascalCase(name),
-                Description = string.Empty
+                Description = string.Empty,
+                IsPolymorphic = schema.Discriminator != null, // Mark as polymorphic if discriminator is present
+                DiscriminatorProperty = schema.Discriminator?.PropertyName
             };
 
             foreach (var property in schema.Properties)
@@ -408,26 +424,133 @@ namespace RestApiGenerator.Core.Converters
                 Description = $"Represents a schema that is composed of all the following types: {string.Join(", ", schemas.Select(s => s.Ref?.Split('/').Last() ?? s.Type))}"
             };
 
-            // For allOf, we combine properties, and required properties remain required
+            var allRequiredFields = new HashSet<string>();
+
+            // For allOf, we combine properties from all sub-schemas with proper $ref resolution
             foreach (var subSchema in schemas)
             {
-                if (subSchema.Properties != null)
+                if (subSchema.Ref != null)
                 {
-                    foreach (var property in subSchema.Properties)
+                    // Handle $ref case - resolve the reference and merge properties
+                    var referencedSchema = ResolveSchemaReference(subSchema.Ref);
+                    if (referencedSchema != null)
                     {
-                        var modelProperty = new ModelProperty
+                        MergeSchemaProperties(model, referencedSchema);
+                        // Collect required fields from referenced schema
+                        if (referencedSchema.Required != null)
                         {
-                            Name = ToPascalCase(property.Key),
-                            JsonPropertyName = property.Key,
-                            Type = ConvertSchemaTypeToCSharp(property.Value),
-                            IsRequired = subSchema.Required?.Contains(property.Key) == true, // Retain required status
-                            Description = string.Empty
-                        };
-                        model.Properties.Add(modelProperty);
+                            foreach (var req in referencedSchema.Required)
+                                allRequiredFields.Add(req);
+                        }
+                    }
+                }
+                else if (subSchema.Properties != null)
+                {
+                    // Handle inline properties
+                    MergeSchemaProperties(model, subSchema);
+                    // Collect required fields from sub schema
+                    if (subSchema.Required != null)
+                    {
+                        foreach (var req in subSchema.Required)
+                            allRequiredFields.Add(req);
                     }
                 }
             }
+
+            // Update IsRequired based on collected required fields
+            foreach (var property in model.Properties)
+            {
+                property.IsRequired = allRequiredFields.Contains(property.JsonPropertyName);
+            }
+
             return model;
+        }
+
+        private SwaggerSchema? ResolveSchemaReference(string refPath)
+        {
+            // Look up the schema in our stored components
+            if (_schemas.TryGetValue(refPath, out var schema))
+            {
+                return schema;
+            }
+
+            // Handle relative references if needed (this is a basic implementation)
+            if (refPath.StartsWith("#/components/schemas/"))
+            {
+                var schemaName = refPath.Split('/').Last();
+                // Fallback: try finding by schema name if exact match fails
+                return _schemas.Values.FirstOrDefault(s =>
+                    _schemas.FirstOrDefault(kvp =>
+                        kvp.Value == s && kvp.Key.Contains(schemaName)).Value != null);
+            }
+
+            return null;
+        }
+
+        private void MergeSchemaProperties(ModelClass model, SwaggerSchema schema)
+        {
+            if (schema.Properties == null)
+                return;
+
+            foreach (var property in schema.Properties)
+            {
+                // Check if property already exists
+                var existingProperty = model.Properties.FirstOrDefault(p =>
+                    p.JsonPropertyName == property.Key || p.Name == ToPascalCase(property.Key));
+
+                if (existingProperty != null)
+                {
+                    // Update existing property (last definition wins per OpenAPI allOf rules)
+                    existingProperty.Type = ConvertSchemaTypeToCSharp(property.Value);
+                    existingProperty.Description = property.Value.Description ?? existingProperty.Description;
+                }
+                else
+                {
+                    // Add new property
+                    var modelProperty = new ModelProperty
+                    {
+                        Name = ToPascalCase(property.Key),
+                        JsonPropertyName = property.Key,
+                        Type = ConvertSchemaTypeToCSharp(property.Value),
+                        IsRequired = false, // Will be set later based on combined required fields
+                        Description = property.Value.Description ?? string.Empty
+                    };
+                    model.Properties.Add(modelProperty);
+                }
+            }
+        }
+
+        private void EstablishInheritanceRelationships(List<ModelClass> models, SwaggerDocument swagger)
+        {
+            // Find all polymorphic models (those with discriminators or marked as polymorphic)
+            var polymorphicModels = models.Where(m => m.IsPolymorphic).ToList();
+
+            foreach (var polymorphicModel in polymorphicModels)
+            {
+                // Find all models that extend this polymorphic model via allOf
+                foreach (var schema in swagger.Components?.Schemas ?? new Dictionary<string, SwaggerSchema>())
+                {
+                    var childSchema = schema.Value;
+                    if (childSchema.AllOf != null)
+                    {
+                        // Check if any part of the allOf references this polymorphic model
+                        var parentRef = childSchema.AllOf.FirstOrDefault(s => s.Ref != null);
+                        if (parentRef?.Ref != null)
+                        {
+                            var parentName = parentRef.Ref.Split('/').Last();
+                            if (string.Equals(ToPascalCase(parentName), polymorphicModel.Name, StringComparison.OrdinalIgnoreCase))
+                            {
+                                // This child extends our polymorphic model
+                                var childModel = models.FirstOrDefault(m => m.Name == ToPascalCase(schema.Key));
+                                if (childModel != null && !polymorphicModel.SubTypes.Contains(childModel))
+                                {
+                                    polymorphicModel.SubTypes.Add(childModel);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

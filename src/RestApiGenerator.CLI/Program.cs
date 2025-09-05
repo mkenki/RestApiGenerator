@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using RestApiGenerator.Core.Parsers;
 using RestApiGenerator.Core.Converters;
 using RestApiGenerator.Core.Generators;
@@ -28,11 +29,12 @@ class Program
                 return 0;
             }
 
-            Console.WriteLine("🚀 RestApiGenerator - Swagger to C# Client Generator");
+            Console.WriteLine($"🚀 RestApiGenerator - Swagger to {options.Language.ToUpper()} Client Generator");
             Console.WriteLine($"📄 Input: {options.InputFile}");
             Console.WriteLine($"📁 Output: {options.OutputDirectory}");
             Console.WriteLine($"🏗️  Namespace: {options.Namespace}");
             Console.WriteLine($"⚡ Client: {options.ClientName}");
+            Console.WriteLine($"🌍 Language: {options.Language}");
             Console.WriteLine();
 
             // Validate input file
@@ -59,17 +61,43 @@ class Program
             var codeModel = converter.ConvertToCodeModel(swaggerDocument, config);
             Console.WriteLine($"✅ Generated {codeModel.Methods.Count} methods and {codeModel.Models.Count} models");
 
-            // Step 3: Generate C# code
-            Console.WriteLine("🔄 Generating C# code...");
-            var generator = new CSharpGenerator();
-            var generatedFiles = await generator.GenerateAllAsync(codeModel);
+            // Step 3: Generate code based on language
+            Console.WriteLine($"🔄 Generating {options.Language} code...");
+            var generatedFiles = new Dictionary<string, string>();
+
+            if (options.Language.Equals("csharp", StringComparison.OrdinalIgnoreCase))
+            {
+                var generator = new CSharpGenerator();
+                generatedFiles = await generator.GenerateAllAsync(codeModel);
+            }
+            else if (options.Language.Equals("java", StringComparison.OrdinalIgnoreCase))
+            {
+                var generator = new JavaGenerator();
+                generatedFiles = await generator.GenerateAllAsync(codeModel).ConfigureAwait(false);
+            }
+            else if (options.Language.Equals("typescript", StringComparison.OrdinalIgnoreCase))
+            {
+                var generator = new TypeScriptGenerator();
+                generatedFiles = await generator.GenerateAllAsync(codeModel);
+            }
+            else if (options.Language.Equals("python", StringComparison.OrdinalIgnoreCase))
+            {
+                var generator = new PythonGenerator();
+                generatedFiles = await generator.GenerateAllAsync(codeModel);
+            }
+            else
+            {
+                Console.WriteLine($"❌ Error: Unsupported language '{options.Language}'");
+                return 1;
+            }
+
             Console.WriteLine($"✅ Generated {generatedFiles.Count} files");
 
             // Step 4: Write files to output directory
             Console.WriteLine("🔄 Writing files...");
             foreach (var file in generatedFiles)
             {
-                var fileName = GetFileName(file.Key);
+                var fileName = GetFileName(file.Key, options.Language);
                 var filePath = Path.Combine(options.OutputDirectory, fileName);
                 await File.WriteAllTextAsync(filePath, file.Value);
                 Console.WriteLine($"📄 Created: {fileName}");
@@ -91,14 +119,39 @@ class Program
         }
     }
 
-    private static string GetFileName(string fileKey)
+    private static string GetFileName(string fileKey, string language)
     {
-        return fileKey switch
+        return language.ToLower() switch
         {
-            "Interface" => "IApiClient.cs",
-            "Client" => "ApiClient.cs", 
-            "Models" => "Models.cs",
-            _ => $"{fileKey}.cs"
+            "java" => fileKey switch
+            {
+                "Interface" => "ApiClientInterface.java",
+                "Client" => "ApiClient.java",
+                "Models" => "Models.java",
+                _ => $"{fileKey}.java"
+            },
+            "typescript" => fileKey switch
+            {
+                "Interface" => "ApiClientInterface.ts",
+                "Client" => "ApiClient.ts",
+                "Models" => "models.ts",
+                _ => $"{fileKey}.ts"
+            },
+            "python" => fileKey switch
+            {
+                "Interface" => "types.py",
+                "Client" => "client.py",
+                "Models" => "models.py",
+                "__init__" => "__init__.py",
+                _ => $"{fileKey}.py"
+            },
+            _ => fileKey switch
+            {
+                "Interface" => "IApiClient.cs",
+                "Client" => "ApiClient.cs",
+                "Models" => "Models.cs",
+                _ => $"{fileKey}.cs"
+            }
         };
     }
 
@@ -134,6 +187,14 @@ class Program
                         return null;
                     break;
 
+                case "-l":
+                case "--language":
+                    if (i + 1 < args.Length)
+                        options.Language = args[++i];
+                    else
+                        return null;
+                    break;
+
                 case "-c":
                 case "--client":
                     if (i + 1 < args.Length)
@@ -165,7 +226,7 @@ class Program
 
     private static void ShowUsage()
     {
-        Console.WriteLine("RestApiGenerator CLI - Generate C# clients from Swagger/OpenAPI specs");
+        Console.WriteLine("RestApiGenerator CLI - Generate API clients from Swagger/OpenAPI specs");
         Console.WriteLine();
         Console.WriteLine("Usage:");
         Console.WriteLine("  RestApiGenerator.CLI -i <input-file> [options]");
@@ -173,14 +234,23 @@ class Program
         Console.WriteLine("Options:");
         Console.WriteLine("  -i, --input <file>        Swagger/OpenAPI JSON file path (required)");
         Console.WriteLine("  -o, --output <directory>  Output directory (default: ./generated)");
-        Console.WriteLine("  -n, --namespace <name>    Target namespace (default: GeneratedApiClient)");
+        Console.WriteLine("  -n, --namespace <name>    Target namespace/package (default: GeneratedApiClient)");
         Console.WriteLine("  -c, --client <name>       Client class name (default: ApiClient)");
+        Console.WriteLine("  -l, --language <lang>     Target language: csharp, java, typescript, python (default: csharp)");
         Console.WriteLine("  -h, --help                Show this help message");
+        Console.WriteLine();
+        Console.WriteLine("Supported Languages:");
+        Console.WriteLine("  csharp     C# client with HttpClient");
+        Console.WriteLine("  java       Java client with Spring WebClient");
+        Console.WriteLine("  typescript TypeScript client with Axios");
+        Console.WriteLine("  python     Python client with aiohttp");
         Console.WriteLine();
         Console.WriteLine("Examples:");
         Console.WriteLine("  RestApiGenerator.CLI -i petstore.json");
         Console.WriteLine("  RestApiGenerator.CLI -i petstore.json -o ./src -n MyApp.Client -c PetStoreClient");
-        Console.WriteLine("  RestApiGenerator.CLI --input swagger.json --output ./generated --namespace MyApi");
+        Console.WriteLine("  RestApiGenerator.CLI -i swagger.json -l java -o ./java-client -n com.myapp");
+        Console.WriteLine("  RestApiGenerator.CLI -i api.json -l typescript -o ./ts-client -n MyApiLib");
+        Console.WriteLine("  RestApiGenerator.CLI -i spec.json -l python -o ./py-client -n api_client");
     }
 }
 
@@ -190,5 +260,6 @@ public class CliOptions
     public string OutputDirectory { get; set; } = "./generated";
     public string Namespace { get; set; } = "GeneratedApiClient";
     public string ClientName { get; set; } = "ApiClient";
+    public string Language { get; set; } = "csharp";
     public bool ShowHelp { get; set; } = false;
 }

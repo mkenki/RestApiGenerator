@@ -38,6 +38,8 @@ namespace RestApiGenerator.Core.Generators
             sb.AppendLine("        private readonly JsonSerializerOptions _jsonOptions;");
             sb.AppendLine("        private readonly AuthenticationConfig _authenticationConfig;");
             sb.AppendLine("        private readonly string? _authenticationValue;");
+            sb.AppendLine("        private readonly Polly.AsyncPolicy _retryPolicy;");
+            sb.AppendLine("        private readonly Polly.CircuitBreaker.AsyncCircuitBreakerPolicy _circuitBreaker;");
             sb.AppendLine();
             
             // Constructor
@@ -52,6 +54,15 @@ namespace RestApiGenerator.Core.Generators
             sb.AppendLine("                WriteIndented = true");
             sb.AppendLine("            };");
             sb.AppendLine();
+            sb.AppendLine("            // Configure HttpClient for optimal performance");
+            sb.AppendLine("            _httpClient.DefaultRequestHeaders.ConnectionClose = false; // Keep connections alive");
+            sb.AppendLine("            _httpClient.Timeout = TimeSpan.FromSeconds(30); // Default timeout");
+            sb.AppendLine("            _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue(\"application/json\"));");
+            sb.AppendLine();
+            sb.AppendLine("            // Initialize resilience components");
+            sb.AppendLine("            _retryPolicy = CreateRetryPolicy();");
+            sb.AppendLine("            _circuitBreaker = CreateCircuitBreaker();");
+            sb.AppendLine();
             sb.AppendLine("            if (_authenticationConfig.Type == AuthenticationType.Bearer)");
             sb.AppendLine("            {");
             sb.AppendLine("                _httpClient.DefaultRequestHeaders.Authorization = ");
@@ -61,6 +72,16 @@ namespace RestApiGenerator.Core.Generators
             sb.AppendLine("                     _authenticationConfig.Location == AuthenticationLocation.Header)");
             sb.AppendLine("            {");
             sb.AppendLine("                _httpClient.DefaultRequestHeaders.Add(_authenticationConfig.Name, _authenticationValue);");
+            sb.AppendLine("            }");
+            sb.AppendLine("            else if (_authenticationConfig.Type >= AuthenticationType.OAuth2AuthorizationCode &&");
+            sb.AppendLine("                     _authenticationConfig.Type <= AuthenticationType.OAuth2Password)");
+            sb.AppendLine("            {");
+            sb.AppendLine("                // OAuth2 authentication");
+            sb.AppendLine("                if (!string.IsNullOrEmpty(_authenticationValue))");
+            sb.AppendLine("                {");
+            sb.AppendLine("                    _httpClient.DefaultRequestHeaders.Authorization = ");
+            sb.AppendLine("                        new System.Net.Http.Headers.AuthenticationHeaderValue(\"Bearer\", _authenticationValue);");
+            sb.AppendLine("                }");
             sb.AppendLine("            }");
             
             if (!string.IsNullOrEmpty(model.BaseUrl))
@@ -110,6 +131,27 @@ namespace RestApiGenerator.Core.Generators
             sb.AppendLine("        {");
             sb.AppendLine("            var json = JsonSerializer.Serialize(obj, _jsonOptions);");
             sb.AppendLine("            return new StringContent(json, Encoding.UTF8, \"application/json\");");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private Polly.AsyncPolicy CreateRetryPolicy()");
+            sb.AppendLine("        {");
+            sb.AppendLine("            return Polly.Policy");
+            sb.AppendLine("                .Handle<HttpRequestException>()");
+            sb.AppendLine("                .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)");
+            sb.AppendLine("                .WaitAndRetryAsync(3, retryAttempt => ");
+            sb.AppendLine("                    TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private Polly.CircuitBreaker.AsyncCircuitBreakerPolicy CreateCircuitBreaker()");
+            sb.AppendLine("        {");
+            sb.AppendLine("            return Polly.CircuitBreaker.CircuitBreakerPolicy");
+            sb.AppendLine("                .Handle<HttpRequestException>()");
+            sb.AppendLine("                .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)");
+            sb.AppendLine("                .AdvancedCircuitBreakerAsync(");
+            sb.AppendLine("                    failureThreshold: 0.5, // Break on 50% failure rate");
+            sb.AppendLine("                    samplingDuration: TimeSpan.FromSeconds(60),");
+            sb.AppendLine("                    minimumThroughput: 5,");
+            sb.AppendLine("                    durationOfBreak: TimeSpan.FromSeconds(30));");
             sb.AppendLine("        }");
             
             sb.AppendLine("    }");
