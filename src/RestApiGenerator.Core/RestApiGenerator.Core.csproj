@@ -5,16 +5,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>RestApiGenerator.Core</PackageId>
-    <Version>1.0.2</Version>
-    <Authors>MustafaKemalEnki</Authors>
+    <Version>1.2.0</Version>
+    <Authors>Mustafa Kemal Enki</Authors>
     <Company>Enki</Company>
-    <Description>A core library for REST API code generation from Swagger/OpenAPI specifications.</Description>
-    <PackageTags>REST;API;Code Generation;Swagger;OpenAPI</PackageTags>
+    <Product>RestApiGenerator Enterprise</Product>
+    <Description>Enterprise-grade REST API client generation from OpenAPI/Swagger specifications. Features advanced schema composition, circuit breaker patterns, OAuth2 authentication, and multi-platform support.</Description>
+    <PackageTags>REST;API;Code-Gen;Swagger;OpenAPI;Enterprise;OAuth2;CircuitBreaker;MultiPlatform</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/mkenki/RestApiGenerator</PackageProjectUrl>
     <RepositoryUrl>https://github.com/mkenki/RestApiGenerator.git</RepositoryUrl>
+    <PackageReleaseNotes>Enterprise enhancement release with advanced OpenAPI schema support, circuit breaker patterns, OAuth2 authentication, and comprehensive multi-platform generators.</PackageReleaseNotes>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
